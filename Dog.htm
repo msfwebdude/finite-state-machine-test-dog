@@ -1,0 +1,316 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html lang="en">
+<head>
+    <title>Inu</title>
+</head>
+<body onload="self.setInterval('dogsLife()',1000)">
+    <div style="position: absolute; z-index: 200; left: 500px; top: 100px;">
+    <table id="stats" style="display: none; border-collapse:collapse; background-color: #FFFFCC; border-bottom: 2px solid #202060; border-left: 1px solid #000080; border-right: 2px solid #202060; border-top: 1px solid #000080;" cellpadding="5" cellspacing="5" >
+        <tr>
+            <td>Time</td>
+            <td><span id="statsTime"></span></td>
+        </tr>
+        <tr>
+            <td>Cleanliness</td>
+            <td><span id="statsClean"></span></td>
+        </tr>
+        <tr>
+            <td>State</td>
+            <td><span id="statsState"></span></td>
+        </tr>
+        <tr>
+            <td>Stomach</td>
+            <td><span id="statsStomach"></span></td>
+        </tr>
+        <tr>
+            <td>Bladder</td>
+            <td><span id="statsBladder"></span></td>
+        </tr>
+        <tr>
+            <td>Energy</td>
+            <td><span id="statsEnergy"></span></td>
+        </tr>
+        <tr>
+            <td>Love</td>
+            <td><span id="statsLove"></span></td>
+        </tr>
+        <tr>
+            <td>Positivity</td>
+            <td><span id="statsPositivity"></span></td>
+        </tr>
+        <tr>
+            <td valign="top">Thresholds</td>
+            <td>
+                <table>
+                    <tr>
+                        <td>Stomach</td>
+                        <td><span id="statsThresholdsStomach"></span></td>
+                    </tr>
+                    <tr>
+                        <td>Bladder</td>
+                        <td><span id="statsThresholdsBladder"></span></td>
+                    </tr>
+                    <tr>
+                        <td>Positivity</td>
+                        <td><span id="statsThresholdsPositivity"></span></td>
+                    </tr>
+                    <tr>
+                        <td>Love</td>
+                        <td><span id="statsThresholdsLove"></span></td>
+                    </tr>
+                    <tr>
+                        <td>Energy</td>
+                        <td><span id="statsThresholdsEnergy"></span></td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+    </div>
+    <p />
+    <input type="button" onclick="toggleStats()" value="Stats" />&nbsp;&nbsp;
+    <input type="button" onclick="dog.enterState('FOOD');" value="Feed" />&nbsp;&nbsp;
+    <input type="button" onclick="dog.enterState('PLAY');" value="Play" />&nbsp;&nbsp;
+    <input type="button" onclick="dog.enterState('CLEN');" value="Clean Up" />
+    <p />Dog:&nbsp;&nbsp;
+    <span id="output"></span>
+    <script language="javascript" type="text/javascript">
+
+
+        function dogsLife() {
+
+
+            environment.hour += 0.25;
+
+            if (dog.state == "DEAD") { populateStats(); return; }
+
+            dog.bladder += 0.01;
+            dog.stomach -= 0.01;
+            dog.love -= 0.01;
+            dog.positivity -= 0.01;
+
+
+            if (dog.bladder > dog.thresholds.bladder_high) { dog.enterState("GPEE"); normalize(); populateStats(); return; }
+            if(dog.bladder > dog.thresholds.bladder_nice)  { dog.enterState("BTHR"); }
+
+            if (dog.stomach < dog.thresholds.stomach_down) { dog.enterState("RVNS"); normalize(); populateStats(); return; }
+            if (dog.stomach < dog.thresholds.stomach_nice) {
+                dog.enterState("HNGR");
+                if (environment.hour > 21 || environment.hour < 6) {
+                    dog.energy -= 0.01;
+                }
+                else {
+                    dog.energy -= 0.005;
+                }
+            }
+            else {
+                dog.energy += 0.005;
+            }
+
+
+
+            normalize(); populateStats();
+            setCookie(last_state, dog.state, 3);
+            if (((dog.energy + dog.love + dog.positivity) < 0.1) && (environment.cleanliness < 0.5)) { dog.enterState("DEAD"); }
+        }
+
+
+        function populateStats() {
+            document.getElementById("statsTime").innerHTML = "" + environment.hour + " hrs";
+            document.getElementById("statsClean").innerHTML = "" +  Math.round((environment.cleanliness / 1) * 100) + "%";
+            document.getElementById("statsState").innerHTML = "" + dog.state + "";
+            document.getElementById("statsStomach").innerHTML = "" + dog.stomach + "";
+            document.getElementById("statsBladder").innerHTML = "" + dog.bladder + "";
+            document.getElementById("statsEnergy").innerHTML = "" + dog.energy + "";
+            document.getElementById("statsLove").innerHTML = "" + dog.love + "";
+            document.getElementById("statsPositivity").innerHTML = "" + dog.positivity + "";
+            document.getElementById("statsThresholdsStomach").innerHTML = "" + dog.thresholds.stomach_down + "&nbsp;&nbsp;&nbsp;&nbsp;" + dog.thresholds.stomach_nice + "&nbsp;&nbsp;&nbsp;&nbsp;" + dog.thresholds.stomach_high + " ";
+            document.getElementById("statsThresholdsBladder").innerHTML = "" + dog.thresholds.bladder_down + "&nbsp;&nbsp;&nbsp;&nbsp;" + dog.thresholds.bladder_nice + "&nbsp;&nbsp;&nbsp;&nbsp;" + dog.thresholds.bladder_high + " ";
+            document.getElementById("statsThresholdsPositivity").innerHTML = "" + dog.thresholds.positivity_down + "&nbsp;&nbsp;&nbsp;&nbsp;" + dog.thresholds.positivity_nice + "&nbsp;&nbsp;&nbsp;&nbsp;" + dog.thresholds.positivity_high + " ";
+            document.getElementById("statsThresholdsLove").innerHTML = "" + dog.thresholds.love_down + "&nbsp;&nbsp;&nbsp;&nbsp;" + dog.thresholds.love_nice + "&nbsp;&nbsp;&nbsp;&nbsp;" + dog.thresholds.love_high + " ";
+            document.getElementById("statsThresholdsEnergy").innerHTML = "" + dog.thresholds.energy_down + "&nbsp;&nbsp;&nbsp;&nbsp;" + dog.thresholds.energy_nice + "&nbsp;&nbsp;&nbsp;&nbsp;" + dog.thresholds.energy_high + " ";
+        }
+
+        function normalize() {
+            if (environment.hour > 24) { environment.hour = 0; }
+            if (environment.cleanliness < 0) { environment.cleanliness = 0; dog.enterState('SICK'); }
+            if (dog.bladder > 1) { dog.bladder = 1; }
+            if (dog.bladder < 0) { dog.bladder = 0; }
+            if (dog.stomach > 1) { dog.stomach = 1; }
+            if (dog.stomach < 0) { dog.stomach = 0; }
+            if (dog.energy > 1) { dog.energy = 1; }
+            if (dog.energy < 0) { dog.energy = 0; }
+            if (dog.love > 1) { dog.love = 1; }
+            if (dog.love < 0) { dog.love = 0; }
+            if (dog.positivity > 1) { dog.positivity = 1; }
+            if (dog.positivity < 0) { dog.positivity = 0; }
+        }
+
+        function toggleStats() {
+            if (document.getElementById("stats").style.display == "none") {
+                document.getElementById("stats").style.display = "block";
+            }
+            else {
+                document.getElementById("stats").style.display = "none";
+            }
+        }
+
+
+        var environment = {
+            cleanliness: 0.8,
+            hour: 12
+        }
+
+
+        var dog = {
+            state: "REST",
+            stomach: 0.5,
+            bladder: 0.3,
+            positivity: 0.9,
+            love: 0.6,
+            energy: 0.5,
+            thresholds: {
+                stomach_down: 0.1,
+                stomach_nice: 0.5,
+                stomach_high: 1.0,
+                bladder_down: 0.1,
+                bladder_nice: 0.5,
+                bladder_high: 1.0,
+                positivity_down: 0.3,
+                positivity_nice: 0.7,
+                positivity_high: 1.0,
+                love_down: 0.4,
+                love_nice: 0.6,
+                love_high: 1.0,
+                energy_down: 0.3,
+                energy_nice: 0.7,
+                energy_high: 0.9
+            },
+            enterState: function (s) {
+                newState = "";
+                message = "";
+                last_state = dog.state;
+                if (dog.state == s) { return; }
+                dog.state = s;
+                switch (s) {
+                    case "BTHR":
+                        message = "(crosses legs)";
+                        newState = "REST";
+                        if (environment.cleanliness < 0.5) {
+                            newState = "GPEE";
+                        }
+                        break;
+                    case "GPEE":
+                        message = "(lifts leg) Ahhh...";
+                        dog.bladder -= 0.85;
+                        dog.positivity += 0.01;
+                        dog.energy -= 0.1;
+                        environment.cleanliness -= 0.25;
+                        newState = "REST";
+                        break;
+                    case "HNGR":
+                        message = "(stomach rumbles, walks over to bowl and points)";
+                        break;
+                    case "DEAD":
+                        message = "(Without love, positivity and health and energy, life is very hard to sustain. With the last ounce of energy, the dog wimpers for a pardon of love and hope, but finds none, quietly lets go. Your dog is dead. (//-T) You Failed.)";
+                        break;
+                    case "RVNS":
+                        message = "(stomach rumbles, walks over to bowl and points)  Bark, Bark, Bark hmmmm";
+                        dog.energy -= 0.1;
+                        break;
+                    case "FOOD":
+                        if (last_state == "RVNS") {
+                            message = "(knocking you over at the sight of food, the dog rassles the dog food bag from you and starts to chew through the bag to eat.)";
+                            dog.stomach += 0.4;
+                        }
+                        else {
+
+                            if (dog.stomach < dog.thresholds.stomach_nice) {
+                                message = "heh heh heh (the dog pants at the sight of food. You place the bowl down and you barely retract your hand as the dog eats the food)";
+                            }
+                            else {
+                                message = "(Smiling as only a happy dog can smile, you place the food down and the dog starts to eat graciously)";
+                            }
+                        }
+                        dog.energy += 0.2;
+                        dog.stomach += 0.5;
+                        dog.positivity += 0.1;
+                        dog.love += 0.1;
+                        environment.cleanliness -= 0.025;
+                        newState = "REST";
+                        break;
+                    case "PLAY":
+                        if (dog.love > dog.thresholds.love_nice) {
+                            message = "(playing joyfully, this dog is truly happy) bark bark bark";
+                            dog.positivity += 0.3;
+                            dog.love += 0.5;
+                            dog.energy -= 0.4;  
+                        }
+                        else { 
+                            message = "(playing with master) bark bark bark";
+                            dog.positivity += 0.1;
+                            dog.love += 0.3;
+                            dog.energy -= 0.3;                        
+                        }
+                        
+                        newState = "REST";
+                        break;
+                    case "SICK":
+                        message = "(wimpers, feeling sick) hmmm hmmm hmm";
+                        dog.positivity -= 0.5;
+                        dog.love -= 0.5;
+                        dog.energy -= 0.5;
+                        newState = "REST";
+                        break;
+                    case "CLEN":
+                        message = "";
+                        dog.positivity += 0.01;
+                        dog.love += 0.03;
+                        dog.energy -= 0.0003;
+                        environment.cleanliness = 0.99;
+                        newState = "REST";
+                        break;
+                    case "REST":
+                        // do nothing
+                        break;
+                }
+                if (message) { document.getElementById("output").innerHTML = message; }
+                if (newState) { window.setTimeout("dog.enterState('" + newState + "')", 10); }
+            }
+        }
+        
+
+        
+        
+        dog.state = getCookie("last_state");
+        if(!dog.state){ dog.state = "REST"; }
+      
+        
+        
+        
+        
+        function setCookie(c_name,value,exdays)
+        {
+            var exdate=new Date();
+            exdate.setDate(exdate.getDate() + exdays);
+            var c_value=escape(value) + ((exdays==null) ? "" : "; expires="+exdate.toUTCString());
+            document.cookie=c_name + "=" + c_value;
+        }
+        
+        function getCookie(c_name)
+        {
+            var i,x,y,ARRcookies=document.cookie.split(";");
+            for (i=0;i<ARRcookies.length;i++)
+            {
+              x=ARRcookies[i].substr(0,ARRcookies[i].indexOf("="));
+              y=ARRcookies[i].substr(ARRcookies[i].indexOf("=")+1);
+              x=x.replace(/^\s+|\s+$/g,"");
+              if (x==c_name)
+                {
+                return unescape(y);
+                }
+              }
+        }
+    </script>
+</body>
+</html>
