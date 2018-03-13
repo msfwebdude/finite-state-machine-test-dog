@@ -1,4 +1,4 @@
-InuDogFSM-Javascript
+FSM Dog-Javascript
 ====================
 
 My attempt at creating a virtual pet dog using finite state machine like features in Javascript and HTML. 
